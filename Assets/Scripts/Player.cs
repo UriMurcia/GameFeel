@@ -21,6 +21,8 @@ public class Player : MonoSingleton<Player>
 
     public int m_GrabbedExitMax = 10;
 
+    public GameObject m_Weapon;
+
     [Header("Feedbacks")]
     [SerializeField] private MMF_Player m_JumpFB;
     [SerializeField] private MMF_Player m_FallingFB;
@@ -30,6 +32,7 @@ public class Player : MonoSingleton<Player>
     [SerializeField] private MMF_Player m_ShootFB;
     [SerializeField] private MMF_Player m_ReceiveDamageFB;
     [SerializeField] private MMF_Player m_TryExitGrabFB;
+    [SerializeField] private MMF_Player m_WeaponPickUpFB;
 
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
@@ -160,6 +163,8 @@ public class Player : MonoSingleton<Player>
     public void GiveWeapon()
     {
         m_hasWeapon = true;
+        m_WeaponPickUpFB?.PlayFeedbacks();
+        m_Weapon.SetActive(true);
     }
 
     void Idle()
@@ -225,10 +230,14 @@ public class Player : MonoSingleton<Player>
 
         if (m_wantsLeft)
         {
+            Vector3 rotation = new Vector3(0, 180f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
             m_vel.x -= m_moveAccel * Time.fixedDeltaTime;
         }
         else if (m_wantsRight)
         {
+            Vector3 rotation = new Vector3(0, 0f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
             m_vel.x += m_moveAccel * Time.fixedDeltaTime;
         }
 
@@ -242,9 +251,13 @@ public class Player : MonoSingleton<Player>
         if (m_wantsLeft)
         {
             m_vel.x -= m_moveAccel * Time.fixedDeltaTime;
+            Vector3 rotation = new Vector3(0, 180f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
         }
         else if (m_wantsRight)
         {
+            Vector3 rotation = new Vector3(0, 0f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
             m_vel.x += m_moveAccel * Time.fixedDeltaTime;
         }
         else if (m_vel.x >= -0.05f && m_vel.x <= 0.05)
