@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
@@ -18,6 +19,8 @@ public class Player : MonoSingleton<Player>
     public float m_airMoveFriction = 0.85f;
     public float m_ShootingFireRate = 1f;
 
+    public int m_GrabbedExitMax = 10;
+
     [Header("Feedbacks")]
     [SerializeField] private MMF_Player m_JumpFB;
     [SerializeField] private MMF_Player m_FallingFB;
@@ -26,12 +29,14 @@ public class Player : MonoSingleton<Player>
     [SerializeField] private MMF_Player m_StopMovingFB;
     [SerializeField] private MMF_Player m_ShootFB;
     [SerializeField] private MMF_Player m_ReceiveDamageFB;
+    [SerializeField] private MMF_Player m_TryExitGrabFB;
 
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
     private bool m_wantsRight = false;
     private bool m_wantsLeft = false;
+    private bool m_wantsToEscapeGrab = false;
     private bool m_shootPressed = false;
     private bool m_fireRight = true;
     private bool m_hasWeapon = false;
@@ -39,6 +44,10 @@ public class Player : MonoSingleton<Player>
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
     private float m_LastShotTime = 0f;
+
+    private bool m_IsGrabbed = false;
+    private Transform m_GrabbedTransform;
+    private int m_GrabbedExitCounter = 0;
 
     private enum State
     {
@@ -56,9 +65,51 @@ public class Player : MonoSingleton<Player>
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
     }
 
+    public void SetGrabbed(Transform grabbedTransform)
+    {
+        m_GrabbedTransform = grabbedTransform;
+        m_IsGrabbed = true;
+    }
+
+    private void TryExitGrabbed()
+    {
+        if (m_wantsToEscapeGrab)
+        {
+            m_GrabbedExitCounter++;
+            m_TryExitGrabFB?.PlayFeedbacks();
+        }
+
+        if (m_GrabbedExitCounter >= m_GrabbedExitMax)
+            SetGrabbedFree();
+    }
+
+    private void SetGrabbedFree()
+    {
+        m_IsGrabbed = false;
+        m_GrabbedExitCounter = 0;
+        ChangeState(State.Jumping);
+    }
+
+    public void Die()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentSceneName);
+    }
+
     private void Update()
     {
         UpdateInput();
+
+        if (m_IsGrabbed)
+        {
+            Vector3 pos = m_GrabbedTransform.position;
+            pos.z = -5;
+            m_rigidBody.transform.position = pos;
+
+            TryExitGrabbed();
+
+            return;
+        }
 
         if (m_shootPressed && m_hasWeapon && (Time.time - m_LastShotTime > m_ShootingFireRate))
         {
@@ -75,6 +126,9 @@ public class Player : MonoSingleton<Player>
 
     void FixedUpdate()
     {
+        if (m_IsGrabbed)
+            return;
+
         switch (m_state)
         {
             case State.Idle:
@@ -258,6 +312,7 @@ public class Player : MonoSingleton<Player>
         m_wantsRight = Input.GetKey(KeyCode.RightArrow);
         m_jumpPressed = Input.GetKeyDown(KeyCode.UpArrow);
         m_jumpHeld = Input.GetKey(KeyCode.UpArrow);
+        m_wantsToEscapeGrab = Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || m_jumpPressed;
         m_shootPressed = Input.GetKey(KeyCode.Space);
     }
 

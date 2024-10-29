@@ -1,31 +1,56 @@
-﻿using System.Collections;
+﻿using MoreMountains.Feedbacks;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Spikes : MonoBehaviour {
 
-    private SpriteRenderer m_sprite = null;
-    private Color m_defaultColor = new Color();
-    // Use this for initialization
-    void Start()
-    {
-        m_sprite = transform.GetComponent<SpriteRenderer>();
-        m_defaultColor = m_sprite.color;
-    }
+    [SerializeField] private LineRenderer m_LineRenderer;
+    [SerializeField] private Transform m_TongueTopPivot;
 
-    // Update is called once per frame
+    [Header("Attack")]
+    [SerializeField] private float m_AttackVelocity = 50f;
+    [SerializeField] private Transform m_AttackDestination;
+    [SerializeField] private FeedbackOnTrigger m_FeedbackOnTrigger;
+
+    [Header("Feedbacks")]
+    [SerializeField] private MMF_Player m_AttackFB;
+
+    private bool m_IsAttacking = false;
+
     void Update()
     {
-
+        m_LineRenderer.SetPosition(1, m_TongueTopPivot.localPosition);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        m_sprite.color = new Color(m_defaultColor.r / 2, m_defaultColor.g / 2, m_defaultColor.b / 2, 1);
+        if (!collision.CompareTag("Player"))
+            return;
+
+        if (!m_IsAttacking)
+        {
+            m_FeedbackOnTrigger.IsAvailable = false;
+            m_IsAttacking = true;
+            Vector3 attackPos = collision.transform.position;
+            attackPos.z = 1f;
+            m_AttackDestination.position = attackPos;
+            m_AttackFB.PlayFeedbacks();
+            StartCoroutine(WaitEndAttack());
+        }
+    }
+
+    private IEnumerator WaitEndAttack()
+    {
+        yield return new WaitUntil(() => !m_AttackFB.IsPlaying);
+        m_IsAttacking = false;
+        m_FeedbackOnTrigger.IsAvailable = true;
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        m_sprite.color = m_defaultColor;
+        if (!collision.CompareTag("Player"))
+            return;
+
     }
 }
