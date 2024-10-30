@@ -51,6 +51,5 @@ public class Spikes : MonoBehaviour {
     {
         if (!collision.CompareTag("Player"))
             return;
-
     }
 }

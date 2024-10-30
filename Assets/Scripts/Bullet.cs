@@ -25,21 +25,22 @@ public class Bullet : MonoBehaviour
     void FixedUpdate()
     {
         Vector3 pos = m_rigidBody.transform.position;
-        pos.x += m_vel.x * Time.fixedDeltaTime;
-        pos.y += m_vel.y * Time.fixedDeltaTime;
+        pos.x += m_vel.x * Time.fixedDeltaTime * m_moveSpeed;
+        pos.y += m_vel.y * Time.fixedDeltaTime * m_moveSpeed;
         m_rigidBody.transform.position = pos;
     }
 
-    public void Fire(Vector3 startPos, bool directionRight)
+    public void Fire(Vector3 startPos, Vector3 direction)
     {
         gameObject.SetActive(true);
         transform.position = startPos;
-        m_vel.x = directionRight ? m_moveSpeed : -m_moveSpeed;
+        m_vel.x = direction.x;
+        m_vel.y = direction.y;
 
-        StartCoroutine(Fire_Internal(startPos, directionRight));
+        StartCoroutine(Fire_Internal());
     }
 
-    private IEnumerator Fire_Internal(Vector3 startPos, bool directionRight)
+    private IEnumerator Fire_Internal()
     {
         yield return null;
         m_ShootFB?.PlayFeedbacks();

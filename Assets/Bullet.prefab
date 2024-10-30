@@ -439,7 +439,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0993fc5b265cdd34dab3600dd512534e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_moveSpeed: 90
+  m_moveSpeed: 100
   m_hitDamage: 1
   m_ShootFB: {fileID: 6086852976283155167}
   m_ImpactFB: {fileID: 8241608839809394502}
@@ -677,15 +677,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 471932, guid: ccf8c3c81145b7740ae9fee6ca518c82, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 471932, guid: ccf8c3c81145b7740ae9fee6ca518c82, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 471932, guid: ccf8c3c81145b7740ae9fee6ca518c82, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 471932, guid: ccf8c3c81145b7740ae9fee6ca518c82, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

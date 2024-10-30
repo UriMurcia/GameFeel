@@ -24,6 +24,10 @@ public class Player : MonoSingleton<Player>
     public GameObject m_Weapon;
     public Transform m_ShootingOrigin;
 
+    [Header("JumpPad")]
+    public float m_JumpPadForce = 10f;
+    public float m_GravityJumpPadForce = -1f;
+
     [Header("Grab")]
     public int m_GrabbedExitMax = 10;
 
@@ -37,6 +41,8 @@ public class Player : MonoSingleton<Player>
     [SerializeField] private MMF_Player m_ReceiveDamageFB;
     [SerializeField] private MMF_Player m_TryExitGrabFB;
     [SerializeField] private MMF_Player m_WeaponPickUpFB;
+    [SerializeField] private MMF_Player m_PressurePadFB;
+    [SerializeField] private MMF_Player m_StopPressurePadFB;
 
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
@@ -57,6 +63,7 @@ public class Player : MonoSingleton<Player>
     private int m_GrabbedExitCounter = 0;
     private bool m_InCinematic = false;
     private bool m_IsInKnockBack = false;
+    private bool m_IsJumpingPad = false;
 
     private enum State
     {
@@ -99,10 +106,19 @@ public class Player : MonoSingleton<Player>
         ChangeState(State.Jumping);
     }
 
-    public void Die()
+    public void JumpPressurePad()
     {
-        string currentSceneName = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(currentSceneName);
+        if (m_IsJumpingPad)
+            return;
+
+        m_IsJumpingPad = true;
+
+        ChangeState(State.Jumping);
+        m_vel.x = 0f;
+        m_vel.y = m_JumpPadForce;
+        ApplyVelocity();
+
+        m_PressurePadFB?.PlayFeedbacks();
     }
 
     private void Update()
@@ -126,10 +142,14 @@ public class Player : MonoSingleton<Player>
             GameObject projectileGO = ObjectPooler.Instance.GetObject("Bullet");
             if (projectileGO)
             {
-                projectileGO.GetComponent<Bullet>().Fire(m_ShootingOrigin.position, m_fireRight);
+                Vector2 shootDirection = m_ShootingOrigin.position - m_Weapon.transform.position;
+
+                projectileGO.GetComponent<Bullet>().Fire(m_ShootingOrigin.position, shootDirection.normalized);
                 m_ShootFB?.PlayFeedbacks();
                 m_LastShotTime = Time.time;
 
+                if (m_IsJumpingPad)
+                    return;
                 m_vel.x += m_ShootingForce * (m_fireRight ? -1f : 1f);
                 m_IsInKnockBack = true;
             }
@@ -247,7 +267,7 @@ public class Player : MonoSingleton<Player>
             m_vel.y = m_jumpVel;
         }
 
-        m_vel.y += m_gravity * Time.fixedDeltaTime;
+        m_vel.y += (m_IsJumpingPad ? m_GravityJumpPadForce : m_gravity) * Time.fixedDeltaTime;
 
         if (m_vel.y <= 0)
         {
@@ -320,6 +340,11 @@ public class Player : MonoSingleton<Player>
             case (State.Falling):
                 m_state = State.Falling;
                 m_FallingFB?.PlayFeedbacks();
+                if (m_IsJumpingPad)
+                {
+                    m_IsJumpingPad = false;
+                    m_StopPressurePadFB?.PlayFeedbacks();
+                }
                 break;
             case (State.Idle):
                 m_state = State.Idle;
