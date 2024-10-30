@@ -9,8 +9,15 @@ public class WeaponPickup : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Player.Instance.GiveWeapon();
         m_PickUpWeaponFB?.PlayFeedbacks();
-        GameObject.Destroy(gameObject);
+        Player.Instance.GiveWeapon(m_PickUpWeaponFB);
+        StartCoroutine(DestroyWeapon());
+    }
+
+    private IEnumerator DestroyWeapon()
+    {
+        yield return new WaitUntil(() => !m_PickUpWeaponFB.IsPlaying);
+
+        GameObject.Destroy(transform.parent.gameObject);
     }
 }

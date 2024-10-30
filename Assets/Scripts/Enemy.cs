@@ -1,3 +1,4 @@
+using MoreMountains.Feedbacks;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,11 +16,15 @@ public class Enemy : MonoBehaviour
 
     public Player m_player = null;
 
+    [SerializeField] private MMF_Player m_StunFB;
+
     private Rigidbody2D m_rigidBody = null;
     private float m_health = 100.0f;
     private float m_timer = 0.0f;
     private float m_lastPlayerDiff = 0.0f;
     private Vector2 m_vel = new Vector2(0, 0);
+
+    private bool m_Stunned = false;
 
     private enum WallCollision
     {
@@ -45,9 +50,28 @@ public class Enemy : MonoBehaviour
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
     }
 
+    public void Stun()
+    {
+        if (!m_Stunned)
+            StartCoroutine(Stun_Internal());
+    }
+
+    private IEnumerator Stun_Internal()
+    {
+        m_Stunned = true;
+        m_StunFB?.PlayFeedbacks();
+
+        yield return new WaitUntil(() => !m_StunFB.IsPlaying);
+
+        m_Stunned = false;
+    }
+
     // Update is called once per frame
     void FixedUpdate()
     {
+        if (m_Stunned)
+            return;
+
         switch (m_state)
         {
             case State.Idle:

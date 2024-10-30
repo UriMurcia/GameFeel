@@ -17,11 +17,15 @@ public class Player : MonoSingleton<Player>
     public float m_jumpMaxTime = 0.20f;
     public float m_airFallFriction = 0.975f;
     public float m_airMoveFriction = 0.85f;
+
+    [Header("Weapon")]
     public float m_ShootingFireRate = 1f;
-
-    public int m_GrabbedExitMax = 10;
-
+    public float m_ShootingForce = 5f;
     public GameObject m_Weapon;
+    public Transform m_ShootingOrigin;
+
+    [Header("Grab")]
+    public int m_GrabbedExitMax = 10;
 
     [Header("Feedbacks")]
     [SerializeField] private MMF_Player m_JumpFB;
@@ -42,7 +46,7 @@ public class Player : MonoSingleton<Player>
     private bool m_wantsToEscapeGrab = false;
     private bool m_shootPressed = false;
     private bool m_fireRight = true;
-    private bool m_hasWeapon = false;
+    public bool m_hasWeapon = false;
     private float m_stateTimer = 0.0f;
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
@@ -51,6 +55,8 @@ public class Player : MonoSingleton<Player>
     private bool m_IsGrabbed = false;
     private Transform m_GrabbedTransform;
     private int m_GrabbedExitCounter = 0;
+    private bool m_InCinematic = false;
+    private bool m_IsInKnockBack = false;
 
     private enum State
     {
@@ -120,9 +126,12 @@ public class Player : MonoSingleton<Player>
             GameObject projectileGO = ObjectPooler.Instance.GetObject("Bullet");
             if (projectileGO)
             {
-                projectileGO.GetComponent<Bullet>().Fire(transform.position, m_fireRight);
+                projectileGO.GetComponent<Bullet>().Fire(m_ShootingOrigin.position, m_fireRight);
                 m_ShootFB?.PlayFeedbacks();
                 m_LastShotTime = Time.time;
+
+                m_vel.x += m_ShootingForce * (m_fireRight ? -1f : 1f);
+                m_IsInKnockBack = true;
             }
         }
     }
@@ -160,16 +169,26 @@ public class Player : MonoSingleton<Player>
         }
     }
 
-    public void GiveWeapon()
+    public void GiveWeapon(MMF_Player feedback)
     {
+        m_InCinematic = true;
+        StartCoroutine(GiveWeapon_Internal(feedback));
+    }
+
+    private IEnumerator GiveWeapon_Internal(MMF_Player feedback)
+    {
+        yield return new WaitUntil(() => !feedback.IsPlaying);
         m_hasWeapon = true;
-        m_WeaponPickUpFB?.PlayFeedbacks();
         m_Weapon.SetActive(true);
+        m_WeaponPickUpFB?.PlayFeedbacks();
+        m_InCinematic = false;
     }
 
     void Idle()
     {
-        m_vel = Vector2.zero;
+        if (!m_IsInKnockBack)
+            m_vel = Vector2.zero;
+
         //Check to see whether to go into movement of some sort
         if (m_groundObjects.Count == 0)
         {
@@ -191,6 +210,13 @@ public class Player : MonoSingleton<Player>
         {
             ChangeState(State.Walking);
             return;
+        }
+
+        if (m_IsInKnockBack)
+        {
+            //m_vel *= 3f;
+            ApplyVelocity();
+            m_IsInKnockBack = false;
         }
     }
 
@@ -321,6 +347,17 @@ public class Player : MonoSingleton<Player>
 
     void UpdateInput()
     {
+        if (m_InCinematic)
+        {
+            m_wantsLeft = false;
+            m_wantsRight = false;
+            m_jumpPressed = false;
+            m_jumpHeld = false;
+            m_wantsToEscapeGrab = false;
+            m_shootPressed = false;
+            return;
+        }
+
         m_wantsLeft = Input.GetKey(KeyCode.LeftArrow);
         m_wantsRight = Input.GetKey(KeyCode.RightArrow);
         m_jumpPressed = Input.GetKeyDown(KeyCode.UpArrow);
@@ -361,20 +398,32 @@ public class Player : MonoSingleton<Player>
                 //Hit ground
                 if (contact.normal.y > 0)
                 {
-                    if (m_groundObjects.Contains(contact.collider.gameObject) == false)
+                    if (collision.gameObject.CompareTag("Enemy") && collision.gameObject.TryGetComponent(out Enemy enemy))
+                    {
+                        enemy.Stun();
+                    }
+                    else if (m_groundObjects.Contains(contact.collider.gameObject) == false)
                     {
                         m_groundObjects.Add(contact.collider.gameObject);
                     }
                     if (m_state == State.Falling)
                     {
-                        //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
-                        if (m_wantsRight || m_wantsLeft)
+                        if (collision.gameObject.CompareTag("Enemy"))
                         {
-                            ChangeState(State.Walking);
+                            m_stateTimer = 0;
+                            ChangeState(State.Jumping);
                         }
                         else
                         {
-                            ChangeState(State.Idle);
+                            //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
+                            if (m_wantsRight || m_wantsLeft)
+                            {
+                                ChangeState(State.Walking);
+                            }
+                            else
+                            {
+                                ChangeState(State.Idle);
+                            }
                         }
                         m_FallToGroundFB?.PlayFeedbacks();
                     }
