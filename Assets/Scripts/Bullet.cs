@@ -7,6 +7,8 @@ public class Bullet : MonoBehaviour
 {
     public float m_moveSpeed = (2.0f * 60.0f);
     public float m_hitDamage = 1.0f;
+    public string m_TargetTag = "Enemy";
+    public string m_SelfTag = "Player";
 
     [SerializeField] private MMF_Player m_ShootFB;
     [SerializeField] private MMF_Player m_ImpactFB;
@@ -18,7 +20,9 @@ public class Bullet : MonoBehaviour
     void Start()
     {
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
-        m_ImpactFB.GetFeedbackOfType<MMF_InstantiateObject>().ParentTransform = transform.root;
+        
+        foreach (var feedback in m_ImpactFB.GetFeedbacksOfType<MMF_InstantiateObject>())
+            feedback.ParentTransform = transform.root;
     }
 
     // Update is called once per frame
@@ -58,17 +62,22 @@ public class Bullet : MonoBehaviour
 
     private void ProcessCollision(Collision2D collision)
     {
+        if (collision.gameObject.CompareTag(m_SelfTag))
+            return;
+
         if (m_rigidBody)
         {
             m_ImpactFB?.PlayFeedbacks();
 
             Vector3 pos = m_rigidBody.transform.position;
 
-            Enemy enemyObject = collision.gameObject.GetComponent<Enemy>();
-            if(enemyObject)
+            if(collision.gameObject.CompareTag(m_TargetTag))
             {
                 //Do damage
-                enemyObject.InflictDamage(m_hitDamage);
+                if (collision.gameObject.TryGetComponent(out Enemy enemyObject))
+                    enemyObject.InflictDamage(m_hitDamage);
+                else if (collision.gameObject.TryGetComponent(out PlayerHealth player))
+                    player.DoDamage();
             }
 
             foreach (ContactPoint2D contact in collision.contacts)

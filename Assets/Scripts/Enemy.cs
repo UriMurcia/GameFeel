@@ -13,10 +13,20 @@ public class Enemy : MonoBehaviour
     public float m_chargeCooldownDuration = 2.0f;
     public float m_chargeMinRange = 1.0f;
     public float m_maxHealth = 4.0f;
+    public float m_MinDistanceToExplode = 2.0f;
 
     public Player m_player = null;
 
+    public int m_NumBulletsPerShot = 6;
+    public float m_InvulnerableWaitTime = 0.7f;
+
     [SerializeField] private MMF_Player m_StunFB;
+    [SerializeField] private MMF_Player m_AlertFB;
+    [SerializeField] private MMF_Player m_ChaseFB;
+    [SerializeField] private MMF_Player m_StopChasingFB;
+    [SerializeField] private MMF_Player m_ShootFB;
+    [SerializeField] private MMF_Player m_ExplodeFB;
+    [SerializeField] private MMF_Player m_InvulnerableFB;
 
     private Rigidbody2D m_rigidBody = null;
     private float m_health = 100.0f;
@@ -24,7 +34,11 @@ public class Enemy : MonoBehaviour
     private float m_lastPlayerDiff = 0.0f;
     private Vector2 m_vel = new Vector2(0, 0);
 
+    private bool m_PlayerIsIndideExplosion = false;
+    private PlayerHealth m_playerHealth = null;
+
     private bool m_Stunned = false;
+    private bool m_InvulnerableWaiting = false;
 
     private enum WallCollision
     {
@@ -42,6 +56,11 @@ public class Enemy : MonoBehaviour
         ChargingCooldown,
     };
     private State m_state = State.Idle;
+
+    private void Awake()
+    {
+        m_playerHealth = m_player.GetComponent<PlayerHealth>();
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -72,6 +91,9 @@ public class Enemy : MonoBehaviour
         if (m_Stunned)
             return;
 
+        if (m_InvulnerableWaiting)
+            return;
+
         switch (m_state)
         {
             case State.Idle:
@@ -95,10 +117,51 @@ public class Enemy : MonoBehaviour
 
     public void InflictDamage(float damageAmount)
     {
+        if (m_InvulnerableFB.IsPlaying)
+            return;
+
+        StartCoroutine(InflictDamage_Internal(damageAmount));
+    }
+
+    private IEnumerator InflictDamage_Internal(float damageAmount)
+    {
+        m_InvulnerableWaiting = true;
+        m_InvulnerableFB?.PlayFeedbacks();
+
+        yield return new WaitForSeconds(m_InvulnerableWaitTime);
+
+        ShootBullets();
         m_health -= damageAmount;
-        if(m_health <= 0.0f)
+        if (m_health <= 0.0f)
         {
             GameObject.Destroy(gameObject);
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        m_InvulnerableWaiting = false;
+    }
+
+    private void ShootBullets()
+    {
+        m_ShootFB?.PlayFeedbacks();
+        //Fire
+       
+        float angleStep = 360f / m_NumBulletsPerShot;
+
+        for (int i = 0; i < m_NumBulletsPerShot; i++)
+        {
+            float angle = i * angleStep;
+
+            float angleRad = angle * Mathf.Deg2Rad;
+
+            Vector3 bulletDirection = new Vector3(Mathf.Cos(angleRad), Mathf.Sin(angleRad), 0);
+
+            GameObject projectileGO = ObjectPooler.Instance.GetObject("BulletEnemy");
+            if (projectileGO)
+            {
+                projectileGO.GetComponent<Bullet>().Fire(transform.position, bulletDirection.normalized);
+            }
         }
     }
 
@@ -113,7 +176,7 @@ public class Enemy : MonoBehaviour
             m_lastPlayerDiff = m_player.transform.position.x - transform.position.x;
             m_vel.x = m_changeSpeed * Mathf.Sign(m_lastPlayerDiff);
             m_timer = 0;
-            m_state = State.Charging;
+            ChangeState(State.Charging);
             return;
         }
 
@@ -121,7 +184,7 @@ public class Enemy : MonoBehaviour
         if(m_timer >= m_holdDuration)
         {
             m_timer = 0;
-            m_state = State.Walking;
+            ChangeState(State.Walking);
 
             if(m_wallFlags == WallCollision.None)
             {
@@ -147,7 +210,7 @@ public class Enemy : MonoBehaviour
             m_lastPlayerDiff = m_player.transform.position.x - transform.position.x;
             m_vel.x = m_changeSpeed * Mathf.Sign(m_lastPlayerDiff);
             m_timer = 0;
-            m_state = State.Charging;
+            ChangeState(State.Charging);
             return;
         }
 
@@ -156,37 +219,73 @@ public class Enemy : MonoBehaviour
         {
             //No longer on the ground, fall.
             m_timer = 0.0f;
-            m_state = State.Idle;
+            ChangeState(State.Idle);
             return;
         }
     }
 
     void Charging()
     {
+        if (m_AlertFB.IsPlaying)
+            return;
+
         //Charge towards player until you pass it's x position.
         ApplyVelocity();
 
-        float xDiff = m_player.transform.position.x - transform.position.x;
-        if (Mathf.Sign(m_lastPlayerDiff) != Mathf.Sign(xDiff))
+        float xDiff = Mathf.Abs(m_player.transform.position.x - transform.position.x);
+        Debug.Log("xDiff: " + xDiff);
+        if (xDiff <= m_MinDistanceToExplode)
         {
             //Charge at the player!
             m_vel.x = 0.0f;
             m_timer = 0;
-            m_state = State.ChargingCooldown;
+            ChangeState(State.ChargingCooldown);
             return;
         }
     }
 
     void ChargingCooldown()
     {
-        m_timer += Time.deltaTime;
-        if (m_timer >= m_chargeCooldownDuration)
+        //m_timer += Time.deltaTime;
+        //if (m_timer >= m_chargeCooldownDuration)
+        if (!m_ExplodeFB.IsPlaying)
         {
+            if (m_PlayerIsIndideExplosion)
+                m_playerHealth.DoDamage();
             //No longer on the ground, fall.
             m_timer = 0.0f;
-            m_state = State.Idle;
+            ChangeState(State.Idle);
             return;
         }
+    }
+
+    private void ChangeState(State state)
+    {
+        State previousState = m_state;
+        switch (state)
+        {
+            case (State.Idle):
+                m_state = State.Idle;
+                if (previousState == State.Charging || previousState == State.ChargingCooldown)
+                    m_StopChasingFB?.PlayFeedbacks();
+                break;
+            case (State.Walking):
+                m_state = State.Walking;
+                break;
+            case (State.Charging):
+                m_AlertFB?.PlayFeedbacks();
+                m_state = State.Charging;
+                break;
+            case (State.ChargingCooldown):
+                m_ExplodeFB?.PlayFeedbacks();
+                m_state = State.ChargingCooldown;
+                break;
+        }
+    }
+
+    public void SetPlayerIsInsideExplosion(bool isInside)
+    {
+        m_PlayerIsIndideExplosion = isInside;
     }
 
     void ApplyVelocity()
@@ -213,6 +312,9 @@ public class Enemy : MonoBehaviour
 
     private void ProcessCollision(Collision2D collision)
     {
+        if (collision.gameObject.CompareTag("Bullet"))
+            return;
+
         Vector3 pos = m_rigidBody.transform.position;
 
         foreach (ContactPoint2D contact in collision.contacts)
@@ -230,7 +332,7 @@ public class Enemy : MonoBehaviour
                     //Stop us.
                     m_wallFlags = (contact.normal.x < 0) ? WallCollision.Left : WallCollision.Right;
 
-                    m_state = State.Idle;
+                    ChangeState(State.Idle);
                     m_timer = 0;
                 }
             }

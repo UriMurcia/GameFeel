@@ -246,10 +246,14 @@ public class Player : MonoSingleton<Player>
         m_vel.y *= m_airFallFriction;
         if (m_wantsLeft)
         {
+            Vector3 rotation = new Vector3(0, 180f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
             m_vel.x -= m_moveAccel * Time.fixedDeltaTime;
         }
         else if (m_wantsRight)
         {
+            Vector3 rotation = new Vector3(0, 0f, 0f);
+            m_Weapon.transform.rotation = Quaternion.Euler(rotation);
             m_vel.x += m_moveAccel * Time.fixedDeltaTime;
         }
 
@@ -344,6 +348,8 @@ public class Player : MonoSingleton<Player>
                 {
                     m_IsJumpingPad = false;
                     m_StopPressurePadFB?.PlayFeedbacks();
+                    if (!m_wantsLeft && !m_wantsRight)
+                        m_wantsLeft = true;
                 }
                 break;
             case (State.Idle):
