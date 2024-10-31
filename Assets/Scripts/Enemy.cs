@@ -144,8 +144,8 @@ public class Enemy : MonoBehaviour
 
     private void ShootBullets()
     {
-        m_ShootFB?.PlayFeedbacks();
         //Fire
+        m_ShootFB?.PlayFeedbacks();
        
         float angleStep = 360f / m_NumBulletsPerShot;
 
@@ -233,7 +233,7 @@ public class Enemy : MonoBehaviour
         ApplyVelocity();
 
         float xDiff = Mathf.Abs(m_player.transform.position.x - transform.position.x);
-        Debug.Log("xDiff: " + xDiff);
+
         if (xDiff <= m_MinDistanceToExplode)
         {
             //Charge at the player!
@@ -246,8 +246,6 @@ public class Enemy : MonoBehaviour
 
     void ChargingCooldown()
     {
-        //m_timer += Time.deltaTime;
-        //if (m_timer >= m_chargeCooldownDuration)
         if (!m_ExplodeFB.IsPlaying)
         {
             if (m_PlayerIsIndideExplosion)

@@ -16,6 +16,16 @@ public class Bullet : MonoBehaviour
     private Rigidbody2D m_rigidBody = null;
     private Vector2 m_vel = new Vector2(0, 0);
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        ProcessCollision(collision);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        ProcessCollision(collision);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -48,16 +58,6 @@ public class Bullet : MonoBehaviour
     {
         yield return null;
         m_ShootFB?.PlayFeedbacks();
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        ProcessCollision(collision);
-    }
-
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        ProcessCollision(collision);
     }
 
     private void ProcessCollision(Collision2D collision)

@@ -277,7 +277,7 @@ GameObject:
   - component: {fileID: 6396997386157797568}
   - component: {fileID: 7938341584546657149}
   - component: {fileID: 4733101476819402226}
-  - component: {fileID: 7538786491508373162}
+  - component: {fileID: 1304488481532470393}
   - component: {fileID: 1449924902634293656}
   m_Layer: 9
   m_Name: BulletEnemy
@@ -400,7 +400,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 5.2, y: 5.2}
   m_EdgeRadius: 0
---- !u!50 &7538786491508373162
+--- !u!50 &1304488481532470393
 Rigidbody2D:
   serializedVersion: 4
   m_ObjectHideFlags: 0
@@ -423,10 +423,10 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 4
+  m_Constraints: 0
 --- !u!114 &1449924902634293656
 MonoBehaviour:
   m_ObjectHideFlags: 0
