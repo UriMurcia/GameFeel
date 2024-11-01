@@ -67,18 +67,20 @@ public class Bullet : MonoBehaviour
 
         if (m_rigidBody)
         {
-            m_ImpactFB?.PlayFeedbacks();
 
             Vector3 pos = m_rigidBody.transform.position;
-
+            bool doImpactFB = true;
             if(collision.gameObject.CompareTag(m_TargetTag))
             {
                 //Do damage
                 if (collision.gameObject.TryGetComponent(out Enemy enemyObject))
-                    enemyObject.InflictDamage(m_hitDamage);
+                    doImpactFB = enemyObject.InflictDamage(m_hitDamage, collision.GetContact(0).point);
                 else if (collision.gameObject.TryGetComponent(out PlayerHealth player))
                     player.DoDamage();
             }
+
+            if (doImpactFB)
+                m_ImpactFB?.PlayFeedbacks();
 
             foreach (ContactPoint2D contact in collision.contacts)
             {

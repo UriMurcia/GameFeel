@@ -150,7 +150,8 @@ public class Player : MonoSingleton<Player>
 
                 if (m_IsJumpingPad)
                     return;
-                m_vel.x += m_ShootingForce * (m_fireRight ? -1f : 1f);
+                m_vel.x += m_ShootingForce * (m_fireRight ? -1f : 1f) * (m_state == State.Falling || m_state == State.Jumping ? 0.5f : 1f)
+                    * (m_state == State.Idle ? 2f : 1f);
                 m_IsInKnockBack = true;
             }
         }

@@ -6,6 +6,11 @@ using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
+    [SerializeField] private SpriteRenderer m_Sprite;
+    [SerializeField] private Color m_ReceiveDamage01Color;
+    [SerializeField] private Color m_ReceiveDamage02Color;
+    [SerializeField] private Color m_ReceiveDamage03Color;
+    [SerializeField] private Color m_DieColor;
     [SerializeField] private MMF_Player m_PlayerReceiveDamageFB;
     [SerializeField] private MMF_Player m_PlayerInvulnerableFB;
     [SerializeField] private MMF_Player m_ReceiveDamage01FB;
@@ -38,13 +43,23 @@ public class PlayerHealth : MonoBehaviour
         m_CurrentHealth--;
 
         if (m_CurrentHealth == 3)
+        {
+            m_Sprite.color = m_ReceiveDamage01Color;
             m_ReceiveDamage01FB?.PlayFeedbacks();
+        }
         else if (m_CurrentHealth == 2)
+        {
+            m_Sprite.color = m_ReceiveDamage02Color;
             m_ReceiveDamage02FB?.PlayFeedbacks();
+        }
         else if (m_CurrentHealth == 1)
+        {
+            m_Sprite.color = m_ReceiveDamage03Color;
             m_ReceiveDamage03FB?.PlayFeedbacks();
+        }
         else if (m_CurrentHealth == 0)
         {
+            m_Sprite.color = m_DieColor;
             m_IsDead = true;
             m_DieFB?.PlayFeedbacks();
             return;

@@ -20,15 +20,21 @@ public class Enemy : MonoBehaviour
     public int m_NumBulletsPerShot = 6;
     public float m_InvulnerableWaitTime = 0.7f;
 
-    [SerializeField] private MMF_Player m_StunFB;
+    [SerializeField] private MMF_Player m_StunDieFB;
+    [SerializeField] private MMF_Player m_StunAfterDieFB;
     [SerializeField] private MMF_Player m_AlertFB;
     [SerializeField] private MMF_Player m_ChaseFB;
     [SerializeField] private MMF_Player m_StopChasingFB;
     [SerializeField] private MMF_Player m_ShootFB;
     [SerializeField] private MMF_Player m_ExplodeFB;
     [SerializeField] private MMF_Player m_InvulnerableFB;
+    [SerializeField] private MMF_Player m_InvulnerableReflectFB;
+    [SerializeField] private MMF_Player m_DieWithBulletFB;
+    [SerializeField] private Transform m_BulletReflectPivot;
+    [SerializeField] private float m_BulletReflectOffset;
 
     private Rigidbody2D m_rigidBody = null;
+    private BoxCollider2D m_Collider = null;
     private float m_health = 100.0f;
     private float m_timer = 0.0f;
     private float m_lastPlayerDiff = 0.0f;
@@ -67,22 +73,33 @@ public class Enemy : MonoBehaviour
     {
         m_health = m_maxHealth;
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
+        m_Collider = transform.GetComponent<BoxCollider2D>();
     }
 
     public void Stun()
     {
-        if (!m_Stunned)
+        //if (!m_Stunned)
             StartCoroutine(Stun_Internal());
     }
 
     private IEnumerator Stun_Internal()
     {
+        if (!m_Stunned)
+        {
+            m_Collider.size = new Vector2(m_Collider.size.x, 1.5f);
+            m_StunDieFB?.PlayFeedbacks();
+            m_rigidBody.bodyType = RigidbodyType2D.Static;
+        }
+        else
+            m_StunAfterDieFB?.PlayFeedbacks();
+
         m_Stunned = true;
-        m_StunFB?.PlayFeedbacks();
+        this.enabled = false;
 
-        yield return new WaitUntil(() => !m_StunFB.IsPlaying);
+        yield return new WaitUntil(() => !m_StunDieFB.IsPlaying);
 
-        m_Stunned = false;
+
+        //m_Stunned = false;
     }
 
     // Update is called once per frame
@@ -115,29 +132,57 @@ public class Enemy : MonoBehaviour
         m_wallFlags = WallCollision.None;
     }
 
-    public void InflictDamage(float damageAmount)
+    public bool InflictDamage(float damageAmount, Vector2 reflectPos)
     {
         if (m_InvulnerableFB.IsPlaying)
-            return;
+        {
+            Vector3 reflectDirection = new Vector3 (reflectPos.x, reflectPos.y, transform.position.z) - transform.position;
+            Vector3 reflectRealPos = new Vector3(reflectPos.x, reflectPos.y, transform.position.z);
+            m_BulletReflectPivot.position = reflectRealPos + reflectDirection.normalized * m_BulletReflectOffset;
+            m_InvulnerableReflectFB.PlayFeedbacks();
+
+            reflectDirection.y = 0f;
+
+            GameObject projectileGO = ObjectPooler.Instance.GetObject("BulletReflectEnemy");
+            if (projectileGO)
+            {
+                projectileGO.GetComponent<Bullet>().Fire(reflectRealPos, reflectDirection.normalized);
+            }
+            return false;
+        }
 
         StartCoroutine(InflictDamage_Internal(damageAmount));
+        return true;
     }
 
     private IEnumerator InflictDamage_Internal(float damageAmount)
     {
-        m_InvulnerableWaiting = true;
-        m_InvulnerableFB?.PlayFeedbacks();
-
-        yield return new WaitForSeconds(m_InvulnerableWaitTime);
-
-        ShootBullets();
         m_health -= damageAmount;
-        if (m_health <= 0.0f)
+
+        m_InvulnerableWaiting = true;
+        m_StopChasingFB.PlayFeedbacks();
+
+        if (m_health > 0.0f)
         {
-            GameObject.Destroy(gameObject);
+            m_InvulnerableFB?.PlayFeedbacks();
+
+            yield return new WaitForSeconds(m_InvulnerableWaitTime);
+        }
+        else
+        {
+            m_DieWithBulletFB.PlayFeedbacks();
+
+            yield return new WaitUntil(() => !m_DieWithBulletFB.IsPlaying);
+            ShootBullets();
+            {
+                GameObject.Destroy(gameObject);
+            }
         }
 
         yield return new WaitForSeconds(0.5f);
+
+        if (m_state == State.Charging)
+            m_ChaseFB.PlayFeedbacks();
 
         m_InvulnerableWaiting = false;
     }
