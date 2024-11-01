@@ -359,6 +359,7 @@ public class Player : MonoSingleton<Player>
                     m_StopMovingFB?.PlayFeedbacks();
                 break;
             case (State.Jumping):
+                m_groundObjects.Clear();
                 m_state = State.Jumping;
                 m_JumpFB?.PlayFeedbacks();
                 break;
