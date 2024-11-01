@@ -12925,7 +12925,6 @@ MonoBehaviour:
   m_WeaponPickUpFB: {fileID: 1482175129}
   m_PressurePadFB: {fileID: 1116856677}
   m_StopPressurePadFB: {fileID: 789457374}
-  m_Enemy: {fileID: 1247187227}
   m_hasWeapon: 0
 --- !u!61 &679829337
 BoxCollider2D:
@@ -13592,10 +13591,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -27117,7 +27116,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2086978939}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -27544,7 +27543,6 @@ MonoBehaviour:
   - rid: 8553867986403590144
   - rid: 8553868030710644737
   - rid: 8553868008419754044
-  - rid: 8553868030710644738
   - rid: 8553868030710644739
   - rid: 8553867986403590171
   - rid: 8553867986403590172
@@ -28780,79 +28778,6 @@ MonoBehaviour:
           m_PreInfinity: 2
           m_PostInfinity: 2
           m_RotationOrder: 4
-    - rid: 8553868030710644738
-      type: {class: MMF_HoldingPause, ns: MoreMountains.Feedbacks, asm: MoreMountains.Feedbacks}
-      data:
-        Active: 1
-        UniqueID: -954873017
-        Label: Holding Pause
-        ChannelMode: 0
-        Channel: 0
-        MMChannelDefinition: {fileID: 0}
-        Chance: 100
-        DisplayColor: {r: 0, g: 0, b: 0, a: 1}
-        Timing:
-          TimescaleMode: 0
-          ExcludeFromHoldingPauses: 0
-          ContributeToTotalDuration: 1
-          InitialDelay: 0
-          CooldownDuration: 0
-          InterruptsOnStop: 1
-          NumberOfRepeats: 0
-          RepeatForever: 0
-          DelayBetweenRepeats: 1
-          MMFeedbacksDirectionCondition: 0
-          PlayDirection: 0
-          ConstantIntensity: 0
-          UseIntensityInterval: 0
-          IntensityIntervalMin: 0
-          IntensityIntervalMax: 0
-          Sequence: {fileID: 0}
-          TrackID: 0
-          Quantized: 0
-          TargetBPM: 120
-        RandomizeOutput: 0
-        RandomMultiplier: {x: 0.8, y: 1}
-        RandomizeDuration: 0
-        RandomDurationMultiplier: {x: 0.5, y: 2}
-        UseRange: 0
-        RangeDistance: 5
-        UseRangeFalloff: 0
-        RangeFalloff:
-          serializedVersion: 2
-          m_Curve:
-          - serializedVersion: 3
-            time: 0
-            value: 1
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          - serializedVersion: 3
-            time: 1
-            value: 0
-            inSlope: 0
-            outSlope: 0
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          m_PreInfinity: 2
-          m_PostInfinity: 2
-          m_RotationOrder: 4
-        RemapRangeFalloff: {x: 0, y: 1}
-        Owner: {fileID: 2143241845}
-        DebugActive: 0
-        PauseDuration: 0
-        RandomizePauseDuration: 0
-        MinPauseDuration: 1
-        MaxPauseDuration: 3
-        RandomizeOnEachPlay: 1
-        ScriptDriven: 0
-        AutoResume: 0
-        AutoResumeAfter: 0.25
     - rid: 8553868030710644739
       type: {class: MMF_Particles, ns: MoreMountains.Feedbacks, asm: MoreMountains.Feedbacks}
       data:
