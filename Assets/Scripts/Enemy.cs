@@ -45,6 +45,7 @@ public class Enemy : MonoBehaviour
 
     private bool m_Stunned = false;
     private bool m_InvulnerableWaiting = false;
+    private bool m_Dead = false;
 
     private enum WallCollision
     {
@@ -134,6 +135,9 @@ public class Enemy : MonoBehaviour
 
     public bool InflictDamage(float damageAmount, Vector2 reflectPos)
     {
+        if (m_Dead == true)
+            return false;
+
         if (m_InvulnerableFB.IsPlaying)
         {
             Vector3 reflectDirection = new Vector3 (reflectPos.x, reflectPos.y, transform.position.z) - transform.position;
@@ -170,6 +174,8 @@ public class Enemy : MonoBehaviour
         }
         else
         {
+            m_Dead = true;
+
             m_DieWithBulletFB.PlayFeedbacks();
 
             yield return new WaitUntil(() => !m_DieWithBulletFB.IsPlaying);
