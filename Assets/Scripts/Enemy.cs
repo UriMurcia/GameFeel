@@ -79,8 +79,7 @@ public class Enemy : MonoBehaviour
 
     public void Stun()
     {
-        //if (!m_Stunned)
-            StartCoroutine(Stun_Internal());
+        StartCoroutine(Stun_Internal());
     }
 
     private IEnumerator Stun_Internal()
@@ -136,6 +135,9 @@ public class Enemy : MonoBehaviour
     public bool InflictDamage(float damageAmount, Vector2 reflectPos)
     {
         if (m_Dead == true)
+            return false;
+
+        if (m_Stunned)
             return false;
 
         if (m_InvulnerableFB.IsPlaying)
